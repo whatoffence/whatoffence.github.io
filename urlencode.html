@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="cn">
+
+<head>
+    <meta charset="UTF-8">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <script src="./js/nebulas.js"></script>
+    <title>URIEncode解码</title>
+</head>
+
+<body>
+    <h3 style="text-align:center">URIEncode解码</h3>
+    <div style="width:95%;text-align: center;margin-left:2.5%">
+            <div style="text-align:center">
+                    解码前
+                    <br>
+                    <textarea id="encoded" style="width:100%;height:300px"></textarea>
+                </div>
+                <br>
+                <div style="text-align:center">
+                    解码后
+                    <br>
+                    <textarea id="decoded" style="width:100%;height:300px"></textarea>
+                </div>
+                <br>
+                <button id="decode" onclick="encode()" type="button" class="btn btn-primary">编码</button>
+                <button id="encode" onclick="decode()" type="button" class="btn btn-primary">解码</button>
+            
+    </div>
+</body>
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<script type="text/javascript">
+    "use strict";
+    var dappAddress = "n21rbqCQuSdbCirMWoVRzKDiBLfDwymrvs3";
+    var nebulas = require("nebulas"),
+        Account = nebulas.Account,
+        neb = new nebulas.Neb();
+    neb.setRequest(new nebulas.HttpRequest("https://testnet.nebulas.io"));
+
+
+    function decode() {
+        var from = Account.NewAccount().getAddressString();
+        var value = "0";
+        var nonce = "0"
+        var gas_price = "1000000"
+        var gas_limit = "2000000"
+        var callFunction = "decode";
+        var callArgs = "[\"" + $("#encoded").val() + "\"]";
+        var contract = {
+            "function": callFunction,
+            "args": callArgs
+        }
+        neb.api.call(from, dappAddress, value, nonce, gas_price, gas_limit, contract).then(function (res) {
+            var decoded=res.result
+            $("#decoded").val(decoded.substring(1,decoded.length-1));
+        }).catch(function (err) {
+            console.log("error:" + err.message)
+        })
+    }
+    function encode() {
+        var from = Account.NewAccount().getAddressString();
+        var value = "0";
+        var nonce = "0"
+        var gas_price = "1000000"
+        var gas_limit = "2000000"
+        var callFunction = "encode";
+        var callArgs = "[\"" + $("#decoded").val() + "\"]";
+        var contract = {
+            "function": callFunction,
+            "args": callArgs
+        }
+        neb.api.call(from, dappAddress, value, nonce, gas_price, gas_limit, contract).then(function (res) {
+            var encoded=res.result
+            $("#encoded").val(encoded.substring(1,encoded.length-1));
+        }).catch(function (err) {
+            console.log("error:" + err.message)
+        })
+    }
+</script>
