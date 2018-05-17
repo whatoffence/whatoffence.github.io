@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <title>爱情对对碰</title>
+</head>
+
+<body style="background-color:#FFC0CB">
+    <div class="alert" id="alert"></div>
+    <h3 style="text-align:center">爱情对对碰</h3>
+    <h5 style="text-align:center">让全世界记录你的暗恋</h5>
+    <h6 style="text-align:center">一款基于区块链的暗恋匹配游戏</h6>
+    <br>
+    <br>
+    <form class="form-horizontal" role="form">
+        <div class="form-group">
+            <label for="user" class="col-sm-2 control-label">你的名字</label>
+            <div class="col-sm-9">
+                <input type="text" class="form-control" id="user" placeholder="你的名字">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="target" class="col-sm-2 control-label">ta的名字</label>
+            <div class="col-sm-9">
+                <input type="text" class="form-control" id="target" placeholder="ta的名字">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+                <button type="button" onclick="submitPair()" class="btn btn-default">确认</button>
+            </div>
+        </div>
+    </form>
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">
+                        
+                    </h4>
+                </div>
+                <div class="modal-body" id="modal-body">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭
+                    </button>
+                    <button type="button" onclick="sure()" class="btn btn-primary">
+                        确定
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</body>
+
+<script src="./js/nebulas.js"></script>
+<script src="./js/nebpay.js"></script>
+<script type="text/javascript">
+    "use strict";
+    var dappAddress = "n21rbqCQuSdbCirMWoVRzKDiBLfDwymrvs3";
+    var serialNumber;
+    var intervalQuery;
+    var nebulas = require("nebulas"),
+        Account = nebulas.Account,
+        neb = new nebulas.Neb();
+    neb.setRequest(new nebulas.HttpRequest("https://mainnet.nebulas.io"));
+
+    var NebPay = require("nebpay");   
+    var nebPay = new NebPay();
+
+    function submitPair() {
+        console.log('click');
+        var from = Account.NewAccount().getAddressString();
+        var value = "0";
+        var nonce = "0"
+        var gas_price = "1000000"
+        var gas_limit = "2000000"
+        var callFunction = "pair";
+        var callArgs = "[\"" + $("#user").val() + "\",\"" + $("#target").val() + "\"]";
+        var contract = {
+            "function": callFunction,
+            "args": callArgs
+        }
+        console.log(callArgs)
+        neb.api.call(from, dappAddress, value, nonce, gas_price, gas_limit, contract).then(function (res) {
+            console.log(res);
+            var ans = res.result;
+            if (ans.indexOf("恭喜") != -1) {
+                $("#alert").addClass("alert-danger");
+                $("#alert").text(ans.substring(1, ans.length - 1));
+                $(".alert").alert();
+            } else if (ans.indexOf("？") != -1) {
+                $("#modal-body").html(ans.substring(1, ans.length - 1));
+                $('#myModal').modal('show');
+            } else {
+                $("#alert").addClass("alert-info");
+                $("#alert").text(ans.substring(1, ans.length - 1));
+                $(".alert").alert();
+            }
+
+
+        }).catch(function (err) {
+            console.log("error:" + err.message)
+        })
+    }
+    function sure(){
+        $('#myModal').modal('hide');
+        var to = dappAddress;
+        var value = "0";
+        var callFunction = "save"
+        var callArgs = "[\"" + $("#user").val() + "\",\"" + $("#target").val() + "\"]"
+        serialNumber = nebPay.call(to, value, callFunction, callArgs, {  
+            callback: "https://pay.nebulas.io/api/mainnet/pay",
+            listener: cbPush        
+
+        });
+        intervalQuery = setInterval(function () {
+            funcIntervalQuery();
+        }, 5000);
+    }
+
+function funcIntervalQuery() {
+        nebPay.queryPayInfo(serialNumber)   
+            .then(function (resp) {
+                console.log("tx result: " + resp)   
+                var respObject = JSON.parse(resp)
+                if(respObject.code === 0){
+                    alert(`提交成功`)
+                    clearInterval(intervalQuery)
+                }
+            })
+            .catch(function (err) {
+                console.log(err);
+            });
+    }
+
+    function cbPush(resp) {
+        console.log("response of push: " + JSON.stringify(resp))
+    }
+
+    function save(){
+        var gTx = new nebulas.Transaction(1001,
+                    Account.NewAccount().getAddressString(),
+                    dappAddress, "0", "0", "1000000", "2000000", {
+            "function": "save",
+            "args": "[\"" + $("#user").val() + "\",\"" + $("#target").val() + "\"]"
+        });
+
+                gTx.signTransaction();
+
+                neb.api
+                    .sendRawTransaction(gTx.toProtoString())
+                    .then(function (resp) {
+                        console.log(JSON.stringify(resp));
+                    })
+    }
+    
+</script>
