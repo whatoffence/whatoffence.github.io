@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=640,user-scalable=no">
+	<meta content="yes" name="apple-mobile-web-app-capable">
+	<meta content="telephone=no" name="format-detection">
+	<title>查询</title>
+	<link rel="stylesheet" type="text/css" href="css/css.css" />
+</head>
+
+<body>
+	<div class="content">
+		<input type="text" name='chaxun' placeholder="输入您需要翻译的单词" />
+		<input type="text" readonly name="" id="chaxunjieguo" value="" />
+		<div class="chaxun btn">查询</div>
+		<div class="btn">
+			<a href="index.html">返回主页</a>
+		</div>
+		<div class="btn">
+			<a href="luru.html">前往录入</a>
+		</div>
+		<div class="btn">
+			<a href="en2zh.html">背单词</a>
+		</div>
+	</div>
+	<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+	<script src="./js/nebulas.js"></script>
+	<script src="./js/nebpay.js"></script>
+	<script type="text/javascript">
+		"use strict";
+		var dappAddress = "n1zKtzNwfXD4LGMjAtoFprmu8e1caGRTv1T";
+		var serialNumber;
+		var intervalQuery;
+		var nebulas = require("nebulas"),
+			Account = nebulas.Account,
+			neb = new nebulas.Neb();
+		neb.setRequest(new nebulas.HttpRequest("https://testnet.nebulas.io"));
+		$('.chaxun').click(function () {
+			var keys = $('[name="chaxun"]').val();
+			if (keys) {
+				var from = Account.NewAccount().getAddressString();
+				var value = "0";
+				var nonce = "0"
+				var gas_price = "1000000"
+				var gas_limit = "2000000"
+				var callFunction = "search";
+				var callArgs = "[\"" + keys + "\"]";
+				var contract = {
+					"function": callFunction,
+					"args": callArgs
+				}
+				neb.api.call(from, dappAddress, value, nonce, gas_price, gas_limit, contract).then(function (res) {
+					console.log(res);
+					$('#chaxunjieguo').val(JSON.parse(res.result));
+				})
+			} else {
+				alert('你要查询的话，请输入你的单词呀')
+			}
+
+		})
+	</script>
+</body>
+
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=640,user-scalable=no">
+	<meta content="yes" name="apple-mobile-web-app-capable">
+	<meta content="telephone=no" name="format-detection">
+	<title>录入</title>
+	<link rel="stylesheet" type="text/css" href="css/css.css" />
+</head>
+
+<body>
+	<div class="content">
+		<input type="text" name='danci' placeholder="输入您需要保存的单词" />
+		<input type="text" name='fanyi' placeholder="输入您需要保存的翻译" />
+		<div class="saveBtn btn">保存</div>
+		<div class="btn">
+			<a href="index.html">返回主页</a>
+		</div>
+		<div class="btn">
+			<a href="chaxun.html">前往查询</a>
+		</div>
+		<div class="btn">
+			<a href="en2zh.html">背单词</a>
+		</div>
+	</div>
+	<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+	<script src="./js/nebulas.js"></script>
+	<script src="./js/nebpay.js"></script>
+	<script>
+		// function save() {
+		// 	var fanyi = $('[name="fanyi"]').val(),
+		// 		danci = $('[name="danci"]').val();
+		// 	if(fanyi && danci) {
+		// 		if(!localStorage.getItem('danci')) {
+		// 			localStorage.setItem('danci', '[]');
+		// 		}
+		// 		var datas = JSON.parse(localStorage.getItem('danci'));
+		// 		var k = 0;
+		// 		for(i = 0; i < datas.length; i++) {
+		// 			if(danci == datas[i]['dc']) {
+		// 				datas[i]['fy'] = fanyi;
+		// 				k = 1;
+		// 			}
+		// 		}
+		// 		if(!k) {
+		// 			datas.push({
+		// 				'dc': danci,
+		// 				'fy': fanyi
+		// 			});
+		// 		}
+
+		// 		localStorage.setItem('danci', JSON.stringify(datas));
+
+		// 		$('[name="fanyi"]').val(''),
+		// 			$('[name="danci"]').val('')
+		// 	} else {
+		// 		alert('请输入单词和翻译!')
+		// 	}
+
+		// }
+		"use strict";
+		var dappAddress = "n1zKtzNwfXD4LGMjAtoFprmu8e1caGRTv1T";
+		var serialNumber;
+		var intervalQuery;
+		var nebulas = require("nebulas"),
+			Account = nebulas.Account,
+			neb = new nebulas.Neb();
+		neb.setRequest(new nebulas.HttpRequest("https://testnet.nebulas.io"));
+
+		var NebPay = require("nebpay");     //https://github.com/nebulasio/nebPay
+		var nebPay = new NebPay();
+		function save() {
+			var to = dappAddress;
+			var value = "0";
+			var callFunction = "save"
+			var callArgs = "[\"" + $('[name="fanyi"]').val() + "\",\"" + $('[name="danci"]').val() + "\"]"
+			serialNumber = nebPay.call(to, value, callFunction, callArgs, {
+				callback: "https://pay.nebulas.io/api/testnet/pay",
+				listener: cbPush
+
+			});
+			intervalQuery = setInterval(function () {
+				funcIntervalQuery();
+			}, 5000);
+		}
+
+		function funcIntervalQuery() {
+			nebPay.queryPayInfo(serialNumber)
+				.then(function (resp) {
+					console.log("tx result: " + resp)
+					var respObject = JSON.parse(resp)
+					if (respObject.code === 0) {
+						alert(`提交成功`)
+						clearInterval(intervalQuery)
+					}
+				})
+				.catch(function (err) {
+					console.log(err);
+				});
+		}
+
+		function cbPush(resp) {
+			console.log("response of push: " + JSON.stringify(resp))
+		}
+		$('.saveBtn').click(save);
+	</script>
+</body>
+
+</html>

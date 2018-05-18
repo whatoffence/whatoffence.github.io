@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=640,user-scalable=no">
+	<meta content="yes" name="apple-mobile-web-app-capable">
+	<meta content="telephone=no" name="format-detection">
+	<title></title>
+	<link rel="stylesheet" href="css/css.css" />
+</head>
+
+<body>
+	<div class="content">
+		<input type="text" readonly name='danci' />
+		<input type="text" name='fanyi' placeholder="输入英文翻译" />
+		<div class="bei btn">
+			<a>提交</a>
+		</div>
+		<div class="next btn">
+			<a href="">下一个</a>
+		</div>
+		<div class="btn">
+			<a href="index.html">返回主页</a>
+		</div>
+		<div class="btn">
+			<a href="chaxun.html">前往查询</a>
+		</div>
+		<!-- <div class="btn">
+			<a href="en2zh.html">前往英译中</a>
+		</div> -->
+		<div class="btn">
+			<a href="luru.html">前往录入</a>
+		</div>
+	</div>
+	<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+	<script src="./js/nebulas.js"></script>
+	<script src="./js/nebpay.js"></script>
+	<script>
+		"use strict";
+		var dappAddress = "n1zKtzNwfXD4LGMjAtoFprmu8e1caGRTv1T";
+		var serialNumber;
+		var intervalQuery;
+		var nebulas = require("nebulas"),
+			Account = nebulas.Account,
+			neb = new nebulas.Neb();
+		neb.setRequest(new nebulas.HttpRequest("https://testnet.nebulas.io"));
+
+		var NebPay = require("nebpay");     //https://github.com/nebulasio/nebPay
+		var nebPay = new NebPay();
+
+		var from = Account.NewAccount().getAddressString();
+		var value = "0";
+		var nonce = "0"
+		var gas_price = "1000000"
+		var gas_limit = "2000000"
+		var callFunction = "get";
+		var callArgs = "[\"danci\"]";
+		var contract = {
+			"function": callFunction,
+			"args": callArgs
+		}
+		neb.api.call(from, dappAddress, value, nonce, gas_price, gas_limit, contract).then(function (res) {
+			console.log(res);
+			//var resp = res.result.substring(1, res.result.length - 1);
+			//resp = resp.replace(/\\/g, "");
+			var dancice = JSON.parse(res.result);
+			var nub_rand = Math.floor(Math.random() * dancice.length);
+			$('.bei').click(function () { (bijiao(nub_rand)) });
+			$("[name='danci']").val(dancice[nub_rand]['dc']);
+		}).catch(function (err) {
+			console.log("error:" + err.message)
+		})
+
+		callArgs = "[\"jiaodui\"]";
+		contract = {
+			"function": callFunction,
+			"args": callArgs
+		}
+		neb.api.call(from, dappAddress, value, nonce, gas_price, gas_limit, contract).then(function (res) {
+			console.log(res);
+			var jiaodui = JSON.parse(res.result) || [];
+		}).catch(function (err) {
+			console.log("error:" + err.message)
+		})
+		function bijiao(nub) {
+			callArgs = "[\"" + nub+ "\",\"" + $("[name='fanyi']").val() + "\"]";
+			contract = {
+				"function": "bijiao",
+				"args": callArgs
+			}
+			neb.api.call(from, dappAddress, value, nonce, gas_price, gas_limit, contract).then(function (res) {
+				console.log(res);
+				if(res.result.indexOf("错误") != -1){
+					alert('回答错误');
+				}else{
+					//var resp = res.result.substring(1, res.result.length - 1)
+					//resp = resp.replace(/\\/g, "");
+					// resp = resp.replace(/\[/g,"");
+					// resp = resp.replace(/\]/g,"");
+					update(JSON.parse(res.result));
+				}
+			}).catch(function (err) {
+				console.log("error:" + err.message)
+			})
+		}
+		function update(ret) {
+		ret=JSON.parse(ret);
+			var to = dappAddress;
+			var value = "0";
+			var callFunction = "saves"
+			var callArgs =  JSON.stringify([encodeURI(JSON.stringify(ret.danci)),encodeURI(JSON.stringify(ret.jiaodui))]);
+			console.log(callArgs);
+			serialNumber = nebPay.call(to, value, callFunction, callArgs, {
+				callback: "https://pay.nebulas.io/api/testnet/pay",
+				listener: cbPush
+
+			});
+			intervalQuery = setInterval(function () {
+				funcIntervalQuery();
+			}, 5000);
+		}
+
+		function funcIntervalQuery() {
+			nebPay.queryPayInfo(serialNumber)
+				.then(function (resp) {
+					console.log("tx result: " + resp)
+					var respObject = JSON.parse(resp)
+					if (respObject.code === 0) {
+						location.reload();
+						clearInterval(intervalQuery)
+					}
+				})
+				.catch(function (err) {
+					console.log(err);
+				});
+		}
+
+		function cbPush(resp) {
+			console.log("response of push: " + JSON.stringify(resp))
+		}
+
+
+		// $(function () {
+		// 	var dancice = JSON.parse(localStorage.getItem('danci')) || [];
+		// 	var jiaodui = JSON.parse(localStorage.getItem('jiaodui')) || [];
+		// 	var nub_rand = Math.floor(Math.random() * dancice.length);
+		// 	if (!dancice.length) {
+		// 		alert('词库没有数据，请录入添加！')
+		// 	} else {
+
+		// 		function showQ(nub) {
+		// 			var nub = nub;
+		// 			$("[name='danci']").val(
+		// 				dancice[nub]['dc']
+		// 			)
+
+		// 			function bijiao(nub) {
+		// 				var fy = $("[name='fanyi']").val(); //用户输入翻译
+		// 				if (!fy) {
+		// 					alert('请输入翻译后再提交!')
+		// 				} else {
+		// 					console.log(fy);
+		// 					console.log(dancice[nub], dancice[nub]['fy']);
+		// 					if (fy == dancice[nub]['fy']) {
+		// 						for (i = 0; i < jiaodui.length; i++) {
+		// 							if (jiaodui[i]['dc'] == dancice[nub]['dc']) {
+		// 								jiaodui[i]['nub'] = jiaodui[i]['nub'] + 1;
+		// 								if (jiaodui[i]['nub'] >= 3) { //如果统计数组超过3次
+		// 									for (j = 0; j < dancice.length; j++) {
+		// 										if (dancice[j]['dc'] == jiaodui[i]['dc']) {
+		// 											dancice.splice(j, 1); //删除单词册数组中相应
+		// 											jiaodui.splice(i, 1); //删除次数统计数组中相应
+		// 											break;
+		// 										}
+		// 									}
+
+		// 								}
+		// 								console.log('dancice', dancice, 'jiaodui', jiaodui);
+		// 								localStorage.setItem('danci', JSON.stringify(dancice));
+		// 								localStorage.setItem('jiaodui', JSON.stringify(jiaodui));
+		// 								location.reload()
+		// 								return false;
+		// 							}
+		// 						}
+		// 						jiaodui.push({
+		// 							'dc': dancice[nub]['dc'],
+		// 							'nub': 1
+		// 						})
+		// 						localStorage.setItem('danci', JSON.stringify(dancice));
+		// 						localStorage.setItem('jiaodui', JSON.stringify(jiaodui));
+		// 						location.reload()
+		// 					} else {
+		// 						alert('错误！')
+		// 					}
+		// 				}
+		// 			}
+
+		// 			$('.bei').click(function () {
+		// 				bijiao(nub_rand)
+		// 			})
+		// 		}
+		// 		showQ(nub_rand);
+		// 	}
+
+		// })
+
+	</script>
+
+</body>
+
+</html>

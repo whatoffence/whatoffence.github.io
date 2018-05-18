@@ -1,0 +1,39 @@
+	*{
+				margin: 0;
+				padding: 0;
+			}
+			.content {
+				margin: 100px auto;
+				width: 640px;
+				text-align: center;
+			}
+			
+			input[type='text'] {
+				margin: 20px 50px;
+				font-size: 30px;
+				padding: 10px 5px;
+				border-radius: 222px;
+				border: 1px solid #ccc;
+				text-align: center;
+			}
+			
+			.btn {
+				margin: 50px auto;
+				width: 200px;
+				height: 60px;
+				background-color: limegreen;
+				color: #fff;
+				font-size: 30px;
+				text-align: center;
+				line-height: 60px;
+			}
+			
+			.btn a {
+				color: #fff;
+				text-decoration: none;
+			}
+			
+			
+			img{
+				max-width: 100%;
+			}
