@@ -30,13 +30,13 @@
 	<script src="./js/nebpay.js"></script>
 	<script type="text/javascript">
 		"use strict";
-		var dappAddress = "n1zKtzNwfXD4LGMjAtoFprmu8e1caGRTv1T";
+		var dappAddress = "n1ubkrezBfH4WLXNkE7BQzLd5VAAu9oAqnA";
 		var serialNumber;
 		var intervalQuery;
 		var nebulas = require("nebulas"),
 			Account = nebulas.Account,
 			neb = new nebulas.Neb();
-		neb.setRequest(new nebulas.HttpRequest("https://testnet.nebulas.io"));
+		neb.setRequest(new nebulas.HttpRequest("https://mainnet.nebulas.io"));
 		$('.chaxun').click(function () {
 			var keys = $('[name="chaxun"]').val();
 			if (keys) {
