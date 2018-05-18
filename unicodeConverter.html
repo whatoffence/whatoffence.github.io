@@ -30,37 +30,6 @@
 </body>
 <script src="https://code.jquery.com/jquery-1.11.0.min.js"></script>
 <script type="text/javascript">
-    function addzero(str) {
-        if (str != null && str != '' && str != 'undefined') {
-            if (str.length == 2) {
-                return '00' + str;
-            }
-        }
-        return str;
-    }
-    function chinese2u(str) {
-        var value='';
-        for (var i = 0; i < str.length; i++) {
-            value += '\\u' + addzero(parseInt(str.charCodeAt(i)).toString(16));
-        }
-        console.log(value);
-        $("#unicode").val(value);
-        return value;
-    }
-
-    function u2chinese(str) {
-        str = str.replace(/(\\u)(\w{1,4})/gi, function ($0) {
-            return (String.fromCharCode(parseInt((escape($0).replace(/(%5Cu)(\w{1,4})/g, "$2")), 16)));
-        });
-        str = str.replace(/(&#x)(\w{1,4});/gi, function ($0) {
-            return String.fromCharCode(parseInt(escape($0).replace(/(%26%23x)(\w{1,4})(%3B)/g, "$2"), 16));
-        });
-        str = str.replace(/(&#)(\d{1,6});/gi, function ($0) {
-            return String.fromCharCode(parseInt(escape($0).replace(/(%26%23)(\d{1,6})(%3B)/g, "$2")));
-        });
-        console.log(str);
-        return str;
-    }
     "use strict";
     var dappAddress = "n1zWDb1FddAYjhX4Y2BWS9pgyH895fUqmUk";
     var nebulas = require("nebulas"),
